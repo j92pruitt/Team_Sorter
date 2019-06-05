@@ -19,10 +19,11 @@ class Player:
         rating (float)
     """
 
-    def __init__(self, first_name, last_name, rating):
+    def __init__(self, row_idx, first_name, last_name, rating=0):
         self.first_name = first_name
         self.last_name = last_name
         self.rating = rating
+        self.row_idx = row_idx
 
     def __repr__(self):
         return "{first} {last}".format(
@@ -121,10 +122,23 @@ def sort_score(team_list):
     score *= max(player_counts) - min(player_counts) + 1
     return score
 
-test1 = Player("Michael", "Jordan", 11)
-test2 = Player("Herman", "Cain", 1)
-test3 = Player("Waldo", "Whereis", 3)
-team_list = team_sort([test1, test2, test3], 3)
+
+def load_players(worksheet, first_name_col, last_name_col, rating_col):
+    playerpool = []
+
+    for i, row in enumerate(worksheet.values):
+        if i > 0:
+            playerpool.append(
+            Player(i, row[first_name_col], row[last_name_col], row[rating_col]))
+    
+    return playerpool
+
+
+wb = load_workbook("test.xlsx", data_only = True)
+ws = wb.active
+
+playerpool = load_players(ws, 1, 2, 6)
+team_list = team_sort(playerpool, 4)
 for team in team_list:
     print(team.player_list)
     
