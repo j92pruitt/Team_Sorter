@@ -129,16 +129,53 @@ def load_players(worksheet, first_name_col, last_name_col, rating_col):
     for i, row in enumerate(worksheet.values):
         if i > 0:
             playerpool.append(
-            Player(i, row[first_name_col], row[last_name_col], row[rating_col]))
+                Player(i, row[first_name_col], row[last_name_col], row[rating_col])
+            )
     
     return playerpool
 
 
-wb = load_workbook("test.xlsx", data_only = True)
-ws = wb.active
+print()
+while True:
+    filename = input("What file would you like to sort?: ")
+    print()
+
+    try:
+        wb = load_workbook(filename, data_only=True)
+        break
+
+    except:
+        print("Error: Could not load file.\n")
+
+print("File Loaded. \n")
+print("Available Worksheets are:")
+
+for i in wb.sheetnames:
+    print(i)
+print()
+
+while True:
+    sheetname = input("Which worksheet would you like to sort?:")
+    print()
+
+    try:
+        ws = wb[sheetname]
+        break
+    except KeyError:
+        print("Error: Incorrect worksheet name.")
 
 playerpool = load_players(ws, 1, 2, 6)
-team_list = team_sort(playerpool, 4)
+
+print("There are {} players detected in worksheet".format(len(playerpool)))
+number_of_teams = int(
+    input("How many teams would you like for this sort?:")
+)
+
+team_list = team_sort(playerpool, number_of_teams)
+
 for team in team_list:
-    print(team.player_list)
+    print("Team {}".format(team.number))
+    for player in team.player_list:
+        print(player)
+    print("------------------------------")
     
