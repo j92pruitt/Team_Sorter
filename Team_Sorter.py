@@ -55,6 +55,12 @@ class Team:
         self.player_list.append(player)
         self.player_count += 1
 
+    def avg_rating(self):
+        total_rating = 0
+        for player in self.player_list:
+            total_rating += player.rating
+        return total_rating/self.player_count
+
 
 def sort(playerpool, num):
     """
@@ -76,9 +82,49 @@ def sort(playerpool, num):
     while playerpool:
         idx = randint(0, len(playerpool)-1)
         team = heapq.heappop(team_heap)
+        player = playerpool.pop(idx)
 
-        team.add_player(playerpool.pop(idx))
+        team.add_player(player)
         heapq.heappush(team_heap, team)
 
     return team_heap
+
+
+def team_sort(playerpool, num, number_of_sorts = 1000):
+    """ 
+    Executes the sort function number_of_sorts times and returns
+    the best result. 
+    """
+
+    best_score = 0
+    for i in range(number_of_sorts):
+        playerpool_copy = playerpool.copy()
+        team_heap = sort(playerpool_copy, num)
+
+        if i == 0 or sort_score(team_heap) < best_score:
+            best_teams = team_heap
+            best_score = sort_score(best_teams)
+    return best_teams
+
+
+def sort_score(team_list):
+    """
+    Scores a list of team objects, a score of 0 is perfectly
+    balanced list of teams. 
+    """
+    score = 0
+    avg_ratings = [team.avg_rating() for team in team_list]
+    for i in avg_ratings:
+        for j in avg_ratings:
+            score += (i - j) ** 2
+    player_counts = [team.player_count for team in team_list]
+    score *= max(player_counts) - min(player_counts) + 1
+    return score
+
+test1 = Player("Michael", "Jordan", 11)
+test2 = Player("Herman", "Cain", 1)
+test3 = Player("Waldo", "Whereis", 3)
+team_list = team_sort([test1, test2, test3], 3)
+for team in team_list:
+    print(team.player_list)
     
