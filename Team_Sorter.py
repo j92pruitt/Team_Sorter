@@ -164,7 +164,7 @@ while True:
     except KeyError:
         print("Error: Incorrect worksheet name.")
 
-playerpool = load_players(ws, 1, 2, 6)
+playerpool = load_players(ws, 3, 4, 11)
 
 print("There are {} players detected in worksheet".format(len(playerpool)))
 number_of_teams = int(
