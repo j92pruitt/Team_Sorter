@@ -135,6 +135,12 @@ def load_players(worksheet, first_name_col, last_name_col, rating_col):
     return playerpool
 
 
+col_num = {}
+alphabet_string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+for i, letter in enumerate(alphabet_string):
+    col_num[letter] = i
+
+
 print()
 while True:
     filename = input("What file would you like to sort?: ")
@@ -164,7 +170,7 @@ while True:
     except KeyError:
         print("Error: Incorrect worksheet name.")
 
-playerpool = load_players(ws, 3, 4, 11)
+playerpool = load_players(ws, col_num["D"], col_num["E"], col_num["L"])
 
 print("There are {} players detected in worksheet".format(len(playerpool)))
 number_of_teams = int(
