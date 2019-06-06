@@ -19,11 +19,12 @@ class Player:
         rating (float)
     """
 
-    def __init__(self, row_idx, first_name, last_name, rating=0):
+    def __init__(self, row_idx, first_name, last_name, rating=0, age=0):
         self.first_name = first_name
         self.last_name = last_name
         self.rating = rating
         self.row_idx = row_idx
+        self.age = age
 
     def __repr__(self):
         return "{first} {last}".format(
@@ -61,6 +62,12 @@ class Team:
         for player in self.player_list:
             total_rating += player.rating
         return total_rating/self.player_count
+
+    def avg_age(self):
+        total_age = 0
+        for player in self.player_list:
+            total_age += player.age
+        return total_age/self.player_count
 
 
 def sort(playerpool, num):
@@ -115,21 +122,28 @@ def sort_score(team_list):
     """
     score = 0
     avg_ratings = [team.avg_rating() for team in team_list]
+    avg_ages = [team.avg_age() for team in team_list]
+
     for i in avg_ratings:
         for j in avg_ratings:
             score += (i - j) ** 2
+    
+    for i in avg_ages:
+        for j in avg_ages:
+            score += ((i-j) ** 2)/4
+    
     player_counts = [team.player_count for team in team_list]
     score *= max(player_counts) - min(player_counts) + 1
     return score
 
 
-def load_players(worksheet, first_name_col, last_name_col, rating_col):
+def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col):
     playerpool = []
 
     for i, row in enumerate(worksheet.values):
         if i > 0:
             playerpool.append(
-                Player(i, row[first_name_col], row[last_name_col], row[rating_col])
+                Player(i, row[first_name_col], row[last_name_col], row[rating_col], row[age_col])
             )
     
     return playerpool
@@ -170,7 +184,7 @@ while True:
     except KeyError:
         print("Error: Incorrect worksheet name.")
 
-playerpool = load_players(ws, col_num["D"], col_num["E"], col_num["L"])
+playerpool = load_players(ws, col_num["D"], col_num["E"], col_num["L"], col_num["O"])
 
 print("There are {} players detected in worksheet".format(len(playerpool)))
 number_of_teams = int(
