@@ -19,12 +19,13 @@ class Player:
         rating (float)
     """
 
-    def __init__(self, row_idx, first_name, last_name, rating=0, age=0):
+    def __init__(self, row_idx, first_name, last_name, rating=0, age=0, request=None):
         self.first_name = first_name
         self.last_name = last_name
         self.rating = rating
         self.row_idx = row_idx
         self.age = age
+        self.request = request
 
     def __repr__(self):
         return "{first} {last}".format(
@@ -93,6 +94,9 @@ def sort(playerpool, num):
         player = playerpool.pop(idx)
 
         team.add_player(player)
+        if player.request:
+            team.add_player(player.request)
+            playerpool.remove(player.request)
         heapq.heappush(team_heap, team)
 
     return team_heap
@@ -137,7 +141,7 @@ def sort_score(team_list):
     return score
 
 
-def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col):
+def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col, request_col):
     playerpool = []
 
     for i, row in enumerate(worksheet.values):
@@ -145,6 +149,26 @@ def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col):
             playerpool.append(
                 Player(i, row[first_name_col], row[last_name_col], row[rating_col], row[age_col])
             )
+    
+    # Checks row by row for player requests and accomadates them.
+    for i, row in enumerate(worksheet.values):
+        request_string = row[request_col]
+        if request_string:
+            if request_string[:10].lower() == "req player":
+                request_name = request_string[11:]
+                request_name_split = request_name.split()
+                first = request_name_split[0].lower()
+                last = request_name_split[1].lower()
+                for player in playerpool:
+                    if player.first_name.lower() == first:
+                        if player.last_name.lower() == last:
+                            playerpool[i-1].request = player
+                            player.request = playerpool[i-1]
+    
+    for player in playerpool:
+        if player.request:
+            print("{} wants to play with {}".format(player.first_name, player.request.first_name))
+            
     
     return playerpool
 
@@ -184,7 +208,7 @@ while True:
     except KeyError:
         print("Error: Incorrect worksheet name.")
 
-playerpool = load_players(ws, col_num["D"], col_num["E"], col_num["L"], col_num["O"])
+playerpool = load_players(ws, col_num["D"], col_num["E"], col_num["L"], col_num["O"], col_num["P"])
 
 print("There are {} players detected in worksheet".format(len(playerpool)))
 number_of_teams = int(
