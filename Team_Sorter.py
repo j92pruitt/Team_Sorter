@@ -2,6 +2,8 @@
 Team Sorter
 
 Author: Joseph Pruitt (j92pruitt@gmail.com)
+
+New branch test
 """
 
 from random import randint
