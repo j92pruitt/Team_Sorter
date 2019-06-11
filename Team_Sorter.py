@@ -70,8 +70,14 @@ class Team:
             total_age += player.age
         return total_age/self.player_count
 
+    def copy(self):
+        team_copy = Team(self.number)
+        for player in self.player_list:
+            team_copy.add_player(player)
+        return team_copy
 
-def sort(playerpool, num):
+
+def sort(playerpool, team_heap):
     """
     This function randomly divides a list of players evenly 
     into a given number of teams.
@@ -83,10 +89,6 @@ def sort(playerpool, num):
     Returns:
         team_heap (list): List of teams.
     """
-    
-    team_heap = []
-    for i in range(num):
-        heapq.heappush(team_heap, Team(i+1))
 
     while playerpool:
         idx = randint(0, len(playerpool)-1)
@@ -102,7 +104,7 @@ def sort(playerpool, num):
     return team_heap
 
 
-def team_sort(playerpool, num, number_of_sorts = 1000):
+def team_sort(playerpool, team_heap, number_of_sorts = 1000):
     """ 
     Executes the sort function number_of_sorts times and returns
     the best result. 
@@ -110,11 +112,12 @@ def team_sort(playerpool, num, number_of_sorts = 1000):
 
     best_score = 0
     for i in range(number_of_sorts):
+        team_heap_copy = [team.copy() for team in team_heap]
         playerpool_copy = playerpool.copy()
-        team_heap = sort(playerpool_copy, num)
+        team_list = sort(playerpool_copy, team_heap_copy)
 
-        if i == 0 or sort_score(team_heap) < best_score:
-            best_teams = team_heap
+        if i == 0 or sort_score(team_list) < best_score:
+            best_teams = team_list
             best_score = sort_score(best_teams)
     return best_teams
 
@@ -141,14 +144,25 @@ def sort_score(team_list):
     return score
 
 
-def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col, request_col):
+def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col, request_col, num):
     playerpool = []
+
+    team_heap = []
+    for i in range(num):
+        team_heap.append(Team(i+1))
 
     for i, row in enumerate(worksheet.values):
         if i > 0:
             playerpool.append(
                 Player(i, row[first_name_col], row[last_name_col], row[rating_col], row[age_col])
             )
+        request_string = row[request_col]
+        if request_string:
+            if request_string[:9].lower() == "req coach":
+                request_team_num = int(request_string[10:])
+                team_heap[request_team_num-1].add_player(playerpool[-1])
+                print("{} want to play on team {}".format(playerpool[-1].first_name, request_team_num))
+                playerpool.pop()
     
     # Checks row by row for player requests and accomadates them.
     for i, row in enumerate(worksheet.values):
@@ -164,13 +178,10 @@ def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col, 
                         if player.last_name.lower() == last:
                             playerpool[i-1].request = player
                             player.request = playerpool[i-1]
+
+    heapq.heapify(team_heap)
     
-    for player in playerpool:
-        if player.request:
-            print("{} wants to play with {}".format(player.first_name, player.request.first_name))
-            
-    
-    return playerpool
+    return playerpool, team_heap
 
 
 col_num = {}
@@ -208,14 +219,15 @@ while True:
     except KeyError:
         print("Error: Incorrect worksheet name.")
 
-playerpool = load_players(ws, col_num["D"], col_num["E"], col_num["L"], col_num["O"], col_num["P"])
-
-print("There are {} players detected in worksheet".format(len(playerpool)))
 number_of_teams = int(
     input("How many teams would you like for this sort?:")
 )
 
-team_list = team_sort(playerpool, number_of_teams)
+playerpool, team_heap = load_players(ws, col_num["D"], col_num["E"], col_num["L"], col_num["O"], col_num["P"], number_of_teams)
+
+print("There are {} players detected in worksheet".format(len(playerpool)))
+
+team_list = team_sort(playerpool, team_heap)
 
 for team in team_list:
     print("Team {}".format(team.number))
