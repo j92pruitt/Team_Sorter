@@ -1,14 +1,19 @@
 """
 Team Sorter
 
-Author: Joseph Pruitt (j92pruitt@gmail.com)
+A program for sorting a group of players into even team based on specified
+parameters; namely number of players on a team, avg skill rating of each
+team per player, and avg age of each team per player.
 
-New branch test
+Author: Joseph Pruitt (j92pruitt@gmail.com)
 """
 
 from random import randint
 import heapq
 from openpyxl import load_workbook
+from tkinter import *
+from tkinter.ttk import *
+from tkinter import filedialog
 
 
 class Player:
@@ -156,7 +161,7 @@ def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col, 
     for i, row in enumerate(worksheet.values):
         if i > 0:
             playerpool.append(
-                Player(i, row[first_name_col], row[last_name_col], row[rating_col], row[age_col])
+                Player(i+1, row[first_name_col], row[last_name_col], row[rating_col], row[age_col])
             )
         request_string = row[request_col]
         if request_string:
@@ -192,48 +197,104 @@ for i, letter in enumerate(alphabet_string):
     col_num[letter] = i
 
 
-print()
-while True:
-    filename = input("What file would you like to sort?: ")
+def text_interface():
+    print()
+    while True:
+        filename = input("What file would you like to sort?: ")
+        print()
+
+        try:
+            wb = load_workbook(filename, data_only=True)
+            break
+
+        except:
+            print("Error: Could not load file.\n")
+
+    print("File Loaded. \n")
+    print("Available Worksheets are:")
+
+    for i in wb.sheetnames:
+        print(i)
     print()
 
-    try:
-        wb = load_workbook(filename, data_only=True)
-        break
+    while True:
+        sheetname = input("Which worksheet would you like to sort?:")
+        print()
 
-    except:
-        print("Error: Could not load file.\n")
+        try:
+            ws = wb[sheetname]
+            break
+        except KeyError:
+            print("Error: Incorrect worksheet name.")
 
-print("File Loaded. \n")
-print("Available Worksheets are:")
+    number_of_teams = int(
+        input("How many teams would you like for this sort?:")
+    )
 
-for i in wb.sheetnames:
-    print(i)
-print()
+    playerpool, team_heap = load_players(ws, col_num["D"], col_num["E"], col_num["L"], col_num["O"], col_num["P"], number_of_teams)
 
-while True:
-    sheetname = input("Which worksheet would you like to sort?:")
-    print()
+    print("There are {} players detected in worksheet".format(len(playerpool)))
 
-    try:
-        ws = wb[sheetname]
-        break
-    except KeyError:
-        print("Error: Incorrect worksheet name.")
+    team_list = team_sort(playerpool, team_heap)
 
-number_of_teams = int(
-    input("How many teams would you like for this sort?:")
-)
+    for team in team_list:
+        print("Team {}".format(team.number))
+        for player in team.player_list:
+            print(player)
+        print("------------------------------")
 
-playerpool, team_heap = load_players(ws, col_num["D"], col_num["E"], col_num["L"], col_num["O"], col_num["P"], number_of_teams)
+def load_file():
+    file = filedialog.askopenfilename()
+    return file
+ 
+ 
+def team_sorter_gui(file):
+    window = Tk()
+    window.title("Team Sorter")
+    window.geometry("500x400")
+    wb = load_workbook(file, data_only=True)
+ 
+    def load_ws():
+        wb.active = wb[ws_selector.get()]
+        sort_btn['state'] = 'normal'
+        player_count_lbl.configure(text="Worksheet Loaded")
+ 
+    def usr_sort():
+        playerpool, team_heap = load_players(wb.active, col_num["D"], col_num["E"], col_num["L"], col_num["O"], col_num["P"], int(team_count_select.get()))
+        team_list = team_sort(playerpool, team_heap)
+        for team in team_list:
+            for player in team.player_list:
+                cell = "A" + str(player.row_idx)
+                wb.active[cell] = team.number
+        wb.save(file)
+        feedback_lbl.configure(text="Sort Complete. Sort Score: {}".format(sort_score(team_list)))
+ 
+    ws_lbl = Label(window, text="Available Worksheets:")
+    ws_lbl.grid(row=0, column=0)
+    ws_selector = Combobox(window)
+    ws_selector['values'] = tuple(wb.sheetnames)
+    ws_selector.grid(row=0, column=1)
+    load_players_btn = Button(window, text="Select", command=load_ws)
+    load_players_btn.grid(row=0, column=2)
+ 
+    player_count_lbl = Label(window, text="No worksheet loaded")
+    player_count_lbl.grid(row=1, column=0)
+ 
+    team_count_lbl = Label(window, text="Number of teams:")
+    team_count_lbl.grid(row=2, column=0)
+    team_count_select = Combobox(window)
+    team_count_select['values'] = (1, 2, 3, 4, 5, 6)
+    team_count_select.current(0)
+    team_count_select.grid(row=2, column=1)
+ 
+    sort_btn = Button(window, text="Sort", command=usr_sort, state=DISABLED)
+    sort_btn.grid(row=2, column=2)
+ 
+    feedback_lbl = Label(window, text="")
+    feedback_lbl.grid(row=3, column=4)
+ 
+    window.mainloop()
 
-print("There are {} players detected in worksheet".format(len(playerpool)))
-
-team_list = team_sort(playerpool, team_heap)
-
-for team in team_list:
-    print("Team {}".format(team.number))
-    for player in team.player_list:
-        print(player)
-    print("------------------------------")
+input_file = load_file()
+team_sorter_gui(input_file)
     
