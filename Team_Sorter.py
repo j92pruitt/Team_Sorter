@@ -32,11 +32,20 @@ class Player:
         self.rating = rating
         self.row_idx = row_idx
         self.age = age
-        self.request = request
+        if request == None:
+            self.request = request
+        else:
+            self.request = [request]
 
     def __repr__(self):
         return "{first} {last}".format(
                 first=self.first_name, last=self.last_name)
+
+    def add_request(self, player):
+        if self.request == None:
+            self.request = [player]
+        else:
+            self.request.append(player)
 
 
 class Team:
@@ -104,8 +113,9 @@ def sort(playerpool, team_heap):
 
         team.add_player(player)
         if player.request:
-            team.add_player(player.request)
-            playerpool.remove(player.request)
+            for request in player.request:
+                team.add_player(request)
+                playerpool.remove(request)
         heapq.heappush(team_heap, team)
 
     return team_heap
@@ -168,7 +178,7 @@ def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col, 
             if request_string[:9].lower() == "req coach":
                 request_team_num = int(request_string[10:])
                 team_heap[request_team_num-1].add_player(playerpool[-1])
-                print("{} want to play on team {}".format(playerpool[-1].first_name, request_team_num))
+                print("{} wants to play on team {}".format(playerpool[-1].first_name, request_team_num))
                 playerpool.pop()
     
     # Checks row by row for player requests and accomadates them.
@@ -183,8 +193,8 @@ def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col, 
                 for player in playerpool:
                     if player.first_name.lower() == first:
                         if player.last_name.lower() == last:
-                            playerpool[i-1].request = player
-                            player.request = playerpool[i-1]
+                            playerpool[i-1].add_request(player)
+                            player.add_request(playerpool[i-1])
 
     heapq.heapify(team_heap)
     
@@ -295,6 +305,7 @@ def team_sorter_gui(file):
  
     window.mainloop()
 
-input_file = load_file()
-team_sorter_gui(input_file)
+text_interface()
+#input_file = load_file()
+#team_sorter_gui(input_file)
     
