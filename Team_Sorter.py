@@ -271,7 +271,7 @@ def team_sorter_gui(file):
  
     def usr_sort():
         if feedback_lbls:
-            clear_feedback()
+            clear_feedback(feedback_lbls)
         playerpool, team_heap = load_players(wb.active, col_num["D"], col_num["E"], col_num["L"], col_num["O"], col_num["P"], int(team_count_select.get()))
         team_list = team_sort(playerpool, team_heap)
         for team in team_list:
@@ -303,26 +303,23 @@ def team_sorter_gui(file):
     sort_btn.grid(row=2, column=2)
  
     feedback_lbls = []
-    def clear_feedback():
-        for lbl in feedback_lbls:
-            lbl.configure(text = "")
-            feedback_lbls.pop(0)
+    def clear_feedback(feedback_lbls):
+        while feedback_lbls:
+            lbl = feedback_lbls.pop()
+            lbl.configure(text="")
 
     def create_feedback_lbls(teamlist):
-        for i,team in enumerate(inputlist):
+        for i,team in enumerate(teamlist):
             feedback_str = "Team {} Avg Rating: {} Avg Age: {}".format(
-                team.number, team.avg_rating(), team.avg_age()
+                team.number, round(team.avg_rating(),2), round(team.avg_age(),2)
             )
             feedback_lbl = Label(window, text=feedback_str)
-            feedback_lbl.grid(row=3 column=i)
+            feedback_lbl.grid(row=i+3, column=4)
             feedback_lbls.append(feedback_lbl)
-
-    #feedback_lbl = Label(window, text="")
-    #feedback_lbl.grid(row=3, column=4)
  
     window.mainloop()
 
-text_interface()
-#input_file = load_file()
-#team_sorter_gui(input_file)
+#text_interface()
+input_file = load_file()
+team_sorter_gui(input_file)
     
