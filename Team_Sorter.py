@@ -161,12 +161,12 @@ def sort_score(team_list):
     return score
 
 
-def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col, request_col, num):
+def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col, request_col, num, start=0):
     playerpool = []
 
     team_heap = []
     for i in range(num):
-        team_heap.append(Team(i+1))
+        team_heap.append(Team(i+start))
 
     for i, row in enumerate(worksheet.values):
         if i > 0:
@@ -177,9 +177,10 @@ def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col, 
         if request_string:
             if request_string[:9].lower() == "req coach":
                 request_team_num = int(request_string[10:])
-                team_heap[request_team_num-1].add_player(playerpool[-1])
-                print("{} wants to play on team {}".format(playerpool[-1].first_name, request_team_num))
-                playerpool.pop()
+                for team in team_heap:
+                    if request_team_num == team.number:
+                        team.add_player(playerpool[-1])
+                        playerpool.pop()
     
     # Checks row by row for player requests and accomadates them.
     for i, row in enumerate(worksheet.values):
@@ -272,7 +273,7 @@ def team_sorter_gui(file):
     def usr_sort():
         if feedback_lbls:
             clear_feedback(feedback_lbls)
-        playerpool, team_heap = load_players(wb.active, col_num["D"], col_num["E"], col_num["L"], col_num["O"], col_num["P"], int(team_count_select.get()))
+        playerpool, team_heap = load_players(wb.active, col_num["D"], col_num["E"], col_num["L"], col_num["O"], col_num["P"], int(team_count_select.get()),int(team_start_select.get()))
         team_list = team_sort(playerpool, team_heap)
         for team in team_list:
             for player in team.player_list:
@@ -300,7 +301,10 @@ def team_sorter_gui(file):
     team_count_select.grid(row=2, column=1)
  
     sort_btn = Button(window, text="Sort", command=usr_sort, state=DISABLED)
-    sort_btn.grid(row=2, column=2)
+    sort_btn.grid(row=2, column=3)
+
+    team_start_select = Spinbox(window, from_=0, to=100, width=5)
+    team_start_select.grid(row=2, column=2)
  
     feedback_lbls = []
     def clear_feedback(feedback_lbls):
