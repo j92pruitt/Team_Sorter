@@ -270,6 +270,8 @@ def team_sorter_gui(file):
         player_count_lbl.configure(text="Worksheet Loaded")
  
     def usr_sort():
+        if feedback_lbls:
+            clear_feedback()
         playerpool, team_heap = load_players(wb.active, col_num["D"], col_num["E"], col_num["L"], col_num["O"], col_num["P"], int(team_count_select.get()))
         team_list = team_sort(playerpool, team_heap)
         for team in team_list:
@@ -277,7 +279,7 @@ def team_sorter_gui(file):
                 cell = "A" + str(player.row_idx)
                 wb.active[cell] = team.number
         wb.save(file)
-        feedback_lbl.configure(text="Sort Complete. Sort Score: {}".format(sort_score(team_list)))
+        create_feedback_lbls(team_list)
  
     ws_lbl = Label(window, text="Available Worksheets:")
     ws_lbl.grid(row=0, column=0)
@@ -300,8 +302,23 @@ def team_sorter_gui(file):
     sort_btn = Button(window, text="Sort", command=usr_sort, state=DISABLED)
     sort_btn.grid(row=2, column=2)
  
-    feedback_lbl = Label(window, text="")
-    feedback_lbl.grid(row=3, column=4)
+    feedback_lbls = []
+    def clear_feedback():
+        for lbl in feedback_lbls:
+            lbl.configure(text = "")
+            feedback_lbls.pop(0)
+
+    def create_feedback_lbls(teamlist):
+        for i,team in enumerate(inputlist):
+            feedback_str = "Team {} Avg Rating: {} Avg Age: {}".format(
+                team.number, team.avg_rating(), team.avg_age()
+            )
+            feedback_lbl = Label(window, text=feedback_str)
+            feedback_lbl.grid(row=3 column=i)
+            feedback_lbls.append(feedback_lbl)
+
+    #feedback_lbl = Label(window, text="")
+    #feedback_lbl.grid(row=3, column=4)
  
     window.mainloop()
 
