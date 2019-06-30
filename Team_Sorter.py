@@ -27,8 +27,7 @@ class Player:
     """
 
     def __init__(self, row_idx, first_name, last_name, rating=0, age=0, request=None):
-        self.first_name = first_name
-        self.last_name = last_name
+        self.name = first_name.lower() + last_name.lower()
         self.rating = rating
         self.row_idx = row_idx
         self.age = age
@@ -173,29 +172,31 @@ def load_players(worksheet, first_name_col, last_name_col, rating_col, age_col, 
             playerpool.append(
                 Player(i+1, row[first_name_col], row[last_name_col], row[rating_col], row[age_col])
             )
-        request_string = row[request_col]
+
+    # Adds player requests to players in playerpool.    
+    for player in playerpool:
+        request_string = worksheet["P"+player.row_idx].value
         if request_string:
-            if request_string[:9].lower() == "req coach":
-                request_team_num = int(request_string[10:])
+            if request_string[:11].lower() == "req player":
+                request_name = request_string[11:].lower()
+                for secondPlayer in playerpool:
+                    if secondPlayer.name == request_name:
+                        player.add_request(secondPlayer)
+                        secondPlayer.add_request(player)
+
+    # Adds players to requested teams while accomodating any player requests
+    for player in playerpool:
+        request_string = worksheet["P"+player.row_idx].value
+        if request_string:
+            if request_string[:10].lower() == "req coach":
+                requestTeamNumber = int(request string[10:])
                 for team in team_heap:
-                    if request_team_num == team.number:
-                        team.add_player(playerpool[-1])
-                        playerpool.pop()
-    
-    # Checks row by row for player requests and accomadates them.
-    for i, row in enumerate(worksheet.values):
-        request_string = row[request_col]
-        if request_string:
-            if request_string[:10].lower() == "req player":
-                request_name = request_string[11:]
-                request_name_split = request_name.split()
-                first = request_name_split[0].lower()
-                last = request_name_split[1].lower()
-                for player in playerpool:
-                    if player.first_name.lower() == first:
-                        if player.last_name.lower() == last:
-                            playerpool[i-1].add_request(player)
-                            player.add_request(playerpool[i-1])
+                    if team.number == requestTeamNumber:
+                        for request in player.request:
+                            team.add_player(request)
+                            playerpool.remove(request)
+                        team.add_player(player)
+                        playerpool.remove(player)
 
     heapq.heapify(team_heap)
     
